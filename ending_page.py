@@ -1,6 +1,6 @@
 from tkinter import *
-import landing_page
-import game
+import landing_page as landing_page
+import game as game
 
 
 def main(elapsed_time, err_ct):
