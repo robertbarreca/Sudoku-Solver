@@ -62,18 +62,31 @@ def run_game(difficulty):
         solvable = solver.validate() and solver.solve()
         # if it can lead to a solution set as read-only and tell user it's right
         if solvable:
-            entry.config(state="readonly")
+            entry.config(bg="#43A047", fg="white")
+            game.after(
+                500,
+                lambda e=entry: [
+                    e.config(bg="white", fg="black"),
+                    e.config(state="readonly"),
+                ],
+            )
             solver.board = starter_board
             # board is complete go to next page
             if all(0 not in row for row in solver.board):
                 end_game(int(time.time() - start_time + error_time), error_ct)
             return
         else:
+            entry.config(bg="#ED4337", fg="white")
+            game.after(500, lambda: entry.config(bg="white", fg="black"))
+            timer_value.config(fg="#ED4337")
+            err_value.config(fg="#ED4337")
+            game.after(500, lambda: timer_value.config(fg="black"))
+            game.after(500, lambda: err_value.config(fg="black"))
             solver.board = starter_board
             solver.board[row][col] = 0
             error_time += 15
             error_ct += 1
-            err_label.config(text=f"Mistake Count: {error_ct}")
+            err_value.config(text=str(error_ct))
             return
 
     def update_time():
@@ -85,7 +98,8 @@ def run_game(difficulty):
             elapsed_time = int(time.time() - start_time + error_time)
             mins = elapsed_time // 60
             secs = elapsed_time % 60
-            timer_label.config(text=f"Elapsed time: {mins:02d}:{secs:02d}")
+            timer_value.config(text=f"{mins:02d}:{secs:02d}")
+            timer_text.config(text=f"Elapsed time: ")
             # Schedule the next update and store the callback
             timer_callback = game.after(100, update_time)
 
@@ -130,6 +144,7 @@ def run_game(difficulty):
                         font=("Arial", 30),
                         justify="center",
                         validate="key",
+                        highlightcolor="gray",
                     )
                     entry.grid(row=m, column=n, padx=1, pady=1)
                     entries[row][col] = entry
@@ -147,12 +162,23 @@ def run_game(difficulty):
     bottom_frame = Frame(game)
     bottom_frame.pack(side="bottom", fill="x")
 
-    timer_label = Label(
-        bottom_frame, text=f"Elapsed Time: 0 seconds", font=("Arial", 18)
-    )
-    timer_label.pack(side="right", padx=15, pady=15)
-    err_label = Label(bottom_frame, text="Mistake Count: 0", font=("Arial", 18))
-    err_label.pack(side="left", padx=15, pady=15)
+    # Sub-frame to group the timer text and value
+    timer_frame = Frame(bottom_frame)
+    timer_frame.pack(side="right", pady=15, padx=15)
+
+    # "Elapsed Time:" text label
+    timer_text = Label(timer_frame, text="Elapsed Time:", font=("Arial", 18))
+    timer_text.pack(side="left")
+
+    # "00:00" value label
+    timer_value = Label(timer_frame, text="00:00", font=("Arial", 18))
+    timer_value.pack(side="left")
+
+    # Mistake display
+    err_text = Label(bottom_frame, text="Mistake Count:", font=("Arial", 18))
+    err_text.pack(side="left", padx=(15, 0), pady=15)
+    err_value = Label(bottom_frame, text="0", font=("Arial", 18))
+    err_value.pack(side="left", padx=(0, 15), pady=15)
 
     # solve board button
     solve_button = Button(
